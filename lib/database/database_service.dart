@@ -74,6 +74,8 @@ class DatabaseService {
     required String username,
     required String password,
     required String email,
+    required String nama,
+    required String nim,
   }) async {
     var usersBox = Hive.box(_usersBox);
 
@@ -87,6 +89,16 @@ class DatabaseService {
       'password': _hashPassword(password), // Password di-hash untuk security
       'email': email,
       'createdAt': DateTime.now().toIso8601String(), // Waktu registrasi
+    });
+
+    // Otomatis buat data profil awal untuk user baru ini
+    var profilBox = Hive.box(_profilBox);
+    await profilBox.put(username, {
+      'nama': nama,
+      'nim': nim,
+      'jurusan': 'Sistem Informasi', // Default value
+      'semester': '1', // Default value
+      'imagePath': null,
     });
 
     return true; // Registrasi berhasil

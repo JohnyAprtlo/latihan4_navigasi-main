@@ -12,6 +12,8 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _namaController = TextEditingController();
+  final TextEditingController _nimController =
+      TextEditingController(); // NIM Controller added
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -28,6 +30,7 @@ class _RegisterPageState extends State<RegisterPage> {
   void _register() async {
     // Validasi: semua field harus diisi
     if (_namaController.text.isEmpty ||
+        _nimController.text.isEmpty || // Validasi NIM
         _emailController.text.isEmpty ||
         _usernameController.text.isEmpty ||
         _passwordController.text.isEmpty ||
@@ -70,10 +73,13 @@ class _RegisterPageState extends State<RegisterPage> {
 
     // Coba register user ke database
     // registerUser() akan return false jika username sudah dipakai
+    // Pass nama dan nim untuk auto-create profile
     bool success = await _db.registerUser(
       username: _usernameController.text.trim(), // trim untuk hapus spasi
       password: _passwordController.text,
       email: _emailController.text.trim(),
+      nama: _namaController.text.trim(),
+      nim: _nimController.text.trim(),
     );
 
     // Clear loading state
@@ -155,6 +161,17 @@ class _RegisterPageState extends State<RegisterPage> {
                     decoration: InputDecoration(
                       labelText: 'Nama Lengkap',
                       prefixIcon: Icon(Icons.person_outline),
+                    ),
+                  ),
+                  SizedBox(height: 16),
+
+                  // NIM
+                  TextField(
+                    controller: _nimController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'NIM',
+                      prefixIcon: Icon(Icons.badge_outlined),
                     ),
                   ),
                   SizedBox(height: 16),
