@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../config/app_theme.dart';
+import '../database/database_service.dart'; // Import database service
 import 'dashboard_page.dart';
 import 'register_page.dart';
 import 'forgot_password_page.dart';
@@ -14,24 +15,51 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final DatabaseService _db = DatabaseService(); // Instance database service
   bool _obscurePassword = true;
   bool _isLoading = false;
 
+  /// Method untuk login dengan authentication real menggunakan Hive
   void _login() async {
-    if (_usernameController.text.isNotEmpty &&
-        _passwordController.text.isNotEmpty) {
-      setState(() => _isLoading = true);
-      await Future.delayed(Duration(seconds: 1));
-      setState(() => _isLoading = false);
+    // Validasi: username dan password tidak boleh kosong
+    if (_usernameController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Masukkan username dan password')));
+      return;
+    }
 
+    // Set loading state
+    setState(() => _isLoading = true);
+
+    // Simulasi delay network (opsional, untuk UX)
+    await Future.delayed(Duration(milliseconds: 800));
+
+    // Coba login menggunakan database
+    // loginUser() akan return true jika username & password benar
+    bool success = await _db.loginUser(
+      _usernameController.text.trim(), // trim() untuk hapus spasi
+      _passwordController.text,
+    );
+
+    // Clear loading state
+    setState(() => _isLoading = false);
+
+    if (success) {
+      // Login berhasil! Navigate ke Dashboard
+      // Menggunakan pushReplacement agar user tidak bisa back ke login
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => DashboardPage()),
       );
     } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Masukkan username dan password')));
+      // Login gagal - username atau password salah
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Username atau password salah!'),
+          backgroundColor: AppTheme.warningRed,
+        ),
+      );
     }
   }
 

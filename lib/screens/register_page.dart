@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../config/app_theme.dart';
+import '../database/database_service.dart'; // Import database service
 import 'login_page.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -17,12 +18,15 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
+  final DatabaseService _db = DatabaseService(); // Instance database service
+
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
 
+  /// Method untuk register user baru ke database
   void _register() async {
-    // Validasi input
+    // Validasi: semua field harus diisi
     if (_namaController.text.isEmpty ||
         _emailController.text.isEmpty ||
         _usernameController.text.isEmpty ||
@@ -34,7 +38,7 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    // Validasi email format
+    // Validasi: email harus mengandung @
     if (!_emailController.text.contains('@')) {
       ScaffoldMessenger.of(
         context,
@@ -42,7 +46,7 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    // Validasi password match
+    // Validasi: password dan confirm password harus sama
     if (_passwordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(
         context,
@@ -50,7 +54,7 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    // Validasi password length
+    // Validasi: password minimal 6 karakter
     if (_passwordController.text.length < 6) {
       ScaffoldMessenger.of(
         context,
@@ -58,20 +62,46 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    // Simulate loading
+    // Set loading state
     setState(() => _isLoading = true);
-    await Future.delayed(Duration(seconds: 2));
+
+    // Simulasi delay network (opsional, untuk UX)
+    await Future.delayed(Duration(milliseconds: 800));
+
+    // Coba register user ke database
+    // registerUser() akan return false jika username sudah dipakai
+    bool success = await _db.registerUser(
+      username: _usernameController.text.trim(), // trim untuk hapus spasi
+      password: _passwordController.text,
+      email: _emailController.text.trim(),
+    );
+
+    // Clear loading state
     setState(() => _isLoading = false);
 
-    // Show success and navigate to login
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Registrasi berhasil! Silakan login.')),
-    );
+    if (success) {
+      // Registrasi berhasil! Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Registrasi berhasil! Silakan login.'),
+          backgroundColor: AppTheme.successGreen,
+        ),
+      );
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => LoginPage()),
-    );
+      // Navigate ke login page
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+      );
+    } else {
+      // Registrasi gagal - username sudah dipakai
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Username sudah digunakan! Pilih username lain.'),
+          backgroundColor: AppTheme.warningRed,
+        ),
+      );
+    }
   }
 
   @override
