@@ -31,11 +31,11 @@ class _LaporanTugasPageState extends State<LaporanTugasPage> {
     await DataManager.saveTugas(_tugas);
   }
 
-  void _toggleSelesai(int index) {
+  void _toggleSelesai(int index) async {
     setState(() {
       _tugas[index].selesai = !_tugas[index].selesai;
     });
-    _saveData();
+    await _saveData();
   }
 
   int get _totalTugas => _tugas.length;

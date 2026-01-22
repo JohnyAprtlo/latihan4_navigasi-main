@@ -89,7 +89,7 @@ class _AturJadwalPageState extends State<AturJadwalPage> {
     }
   }
 
-  void _addJadwal() {
+  void _addJadwal() async {
     if (_selectedMK != null && _selectedDate != null && _selectedTime != null) {
       final jadwal = Jadwal(
         mataKuliah: _selectedMK!,
@@ -100,7 +100,7 @@ class _AturJadwalPageState extends State<AturJadwalPage> {
         _jadwal.add(jadwal);
         _resetForm();
       });
-      _saveData();
+      await _saveData();
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Jadwal ditambahkan')));
@@ -119,12 +119,12 @@ class _AturJadwalPageState extends State<AturJadwalPage> {
     });
   }
 
-  void _deleteJadwal(int index) {
+  void _deleteJadwal(int index) async {
     final jadwalName = _jadwal[index].mataKuliah;
     setState(() {
       _jadwal.removeAt(index);
     });
-    _saveData();
+    await _saveData();
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text('Jadwal $jadwalName dihapus')));

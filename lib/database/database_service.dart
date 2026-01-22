@@ -70,12 +70,18 @@ class DatabaseService {
   /// - username: untuk login
   /// - password: dalam bentuk hash (aman)
   /// - email: untuk recovery/forgot password
+  /// - nama: Nama lengkap mahasiswa
+  /// - nim: Nomor Induk Mahasiswa
+  /// - jurusan: Jurusan mahasiswa
+  /// - semester: Semester saat ini (1-13)
   Future<bool> registerUser({
     required String username,
     required String password,
     required String email,
     required String nama,
     required String nim,
+    required String jurusan, // Parameter baru: Jurusan
+    required String semester,
   }) async {
     var usersBox = Hive.box(_usersBox);
 
@@ -92,12 +98,13 @@ class DatabaseService {
     });
 
     // Otomatis buat data profil awal untuk user baru ini
+    // Data semester dan jurusan diambil dari input user saat registrasi
     var profilBox = Hive.box(_profilBox);
     await profilBox.put(username, {
       'nama': nama,
       'nim': nim,
-      'jurusan': 'Sistem Informasi', // Default value
-      'semester': '1', // Default value
+      'jurusan': jurusan, // Save value jurusan yang diinput
+      'semester': semester, // Save value semester yang dipilih
       'imagePath': null,
     });
 
@@ -196,7 +203,12 @@ class DatabaseService {
     if (!isLoggedIn) return null;
 
     var profilBox = Hive.box(_profilBox);
-    return profilBox.get(_currentUserId);
+    var data = profilBox.get(_currentUserId);
+
+    if (data == null) return null;
+
+    // Explicitly cast dynamic Map to Map<String, dynamic>
+    return Map<String, dynamic>.from(data);
   }
 
   // ============================================================================
@@ -249,8 +261,11 @@ class DatabaseService {
 
     if (data == null) return [];
 
-    // Convert dynamic list to List<Map>
-    return List<Map<String, dynamic>>.from(data);
+    // Convert dynamic list to List<Map<String, dynamic>>
+    // Hive returns List<dynamic>, and each item is Map<dynamic, dynamic>
+    return (data as List)
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
   }
 
   // ============================================================================
@@ -276,8 +291,10 @@ class DatabaseService {
 
     if (data == null) return [];
 
-    // Convert dynamic list to List<Map>
-    return List<Map<String, dynamic>>.from(data);
+    // Convert dynamic list to List<Map<String, dynamic>>
+    return (data as List)
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
   }
 
   // ============================================================================

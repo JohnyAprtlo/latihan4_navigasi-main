@@ -19,24 +19,30 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   List<Tugas> _tugas = [];
+  String _namaUser = ''; // Field untuk nama user
 
   @override
   void initState() {
     super.initState();
-    _loadTugas();
+    _loadData();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _loadTugas();
+    _loadData();
   }
 
-  Future<void> _loadTugas() async {
+  Future<void> _loadData() async {
     final tugasData = await DataManager.loadTugas();
-    setState(() {
-      _tugas = tugasData;
-    });
+    final profilData = await DataManager.loadProfil();
+
+    if (mounted) {
+      setState(() {
+        _tugas = tugasData;
+        _namaUser = profilData.nama;
+      });
+    }
   }
 
   int get _totalTugas => _tugas.length;
@@ -56,13 +62,14 @@ class _DashboardPageState extends State<DashboardPage> {
             Text('Dashboard'),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: _loadTugas,
-            tooltip: 'Refresh',
-          ),
-        ],
+        // Refresh button removed as auto-refresh is implemented
+        // actions: [
+        //   IconButton(
+        //     icon: Icon(Icons.refresh),
+        //     onPressed: _loadTugas,
+        //     tooltip: 'Refresh',
+        //   ),
+        // ],
       ),
       drawer: _buildDrawer(),
       body: Container(
@@ -112,7 +119,14 @@ class _DashboardPageState extends State<DashboardPage> {
                         padding: EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
+                          shape: BoxShape.circle, // Change to circular shape
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
                         ),
                         child: Image.asset(
                           'assets/images/logo_uniba.png',
@@ -145,46 +159,54 @@ class _DashboardPageState extends State<DashboardPage> {
                 ],
               ),
             ),
-            _buildDrawerItem(
-              Icons.book_rounded,
-              'Input MK',
-              () => Navigator.push(
+            _buildDrawerItem(Icons.book_rounded, 'Input MK', () async {
+              Navigator.pop(context); // Close drawer first
+              await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => InputMKPage()),
-              ),
-            ),
-            _buildDrawerItem(
-              Icons.schedule_rounded,
-              'Atur Jadwal',
-              () => Navigator.push(
+              );
+              _loadData();
+            }),
+            _buildDrawerItem(Icons.schedule_rounded, 'Atur Jadwal', () async {
+              Navigator.pop(context);
+              await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => AturJadwalPage()),
-              ),
-            ),
+              );
+              _loadData();
+            }),
             _buildDrawerItem(
               Icons.notifications_rounded,
               'Pengingat Tugas',
-              () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => PengingatTugasPage()),
-              ),
+              () async {
+                Navigator.pop(context);
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => PengingatTugasPage()),
+                );
+                _loadData();
+              },
             ),
-            _buildDrawerItem(
-              Icons.report_rounded,
-              'Laporan Tugas',
-              () => Navigator.push(
+            _buildDrawerItem(Icons.report_rounded, 'Laporan Tugas', () async {
+              Navigator.pop(context);
+              await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => LaporanTugasPage()),
-              ),
-            ),
+              );
+              _loadData();
+            }),
             Divider(color: AppTheme.borderSubtle),
             _buildDrawerItem(
               Icons.person_rounded,
               'Profil Mahasiswa',
-              () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ProfilPage()),
-              ),
+              () async {
+                Navigator.pop(context);
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProfilPage()),
+                );
+                _loadData(); // Update data if profile changes affect anything
+              },
             ),
             Divider(color: AppTheme.borderSubtle),
             _buildDrawerItem(Icons.logout_rounded, 'Logout', _logout),
@@ -258,7 +280,7 @@ class _DashboardPageState extends State<DashboardPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Selamat Datang! 👋',
+                  'Selamat Datang, $_namaUser! 👋',
                   style: AppTheme.heading2.copyWith(color: Colors.white),
                 ),
                 SizedBox(height: 8),
@@ -294,37 +316,49 @@ class _DashboardPageState extends State<DashboardPage> {
           'Input MK',
           Icons.book_rounded,
           AppTheme.accentBlue,
-          () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => InputMKPage()),
-          ),
+          () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => InputMKPage()),
+            );
+            _loadData(); // Auto refresh when back
+          },
         ),
         _buildQuickActionCard(
           'Atur Jadwal',
           Icons.schedule_rounded,
           Color(0xFF9D4EDD),
-          () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => AturJadwalPage()),
-          ),
+          () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => AturJadwalPage()),
+            );
+            _loadData(); // Auto refresh when back
+          },
         ),
         _buildQuickActionCard(
           'Pengingat Tugas',
           Icons.notifications_active_rounded,
           Color(0xFFFFB703),
-          () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => PengingatTugasPage()),
-          ),
+          () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => PengingatTugasPage()),
+            );
+            _loadData(); // Auto refresh when back
+          },
         ),
         _buildQuickActionCard(
           'Laporan Tugas',
           Icons.assessment_rounded,
           AppTheme.successGreen,
-          () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => LaporanTugasPage()),
-          ),
+          () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => LaporanTugasPage()),
+            );
+            _loadData(); // Auto refresh when back
+          },
         ),
       ],
     );

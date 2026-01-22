@@ -41,7 +41,7 @@ class _PengingatTugasPageState extends State<PengingatTugasPage> {
     await DataManager.saveTugas(_tugas);
   }
 
-  void _addTugas() {
+  void _addTugas() async {
     if (_tugasController.text.isNotEmpty) {
       setState(() {
         _tugas.add(
@@ -57,7 +57,7 @@ class _PengingatTugasPageState extends State<PengingatTugasPage> {
         _selectedDate = null;
         _selectedTime = null;
       });
-      _saveData();
+      await _saveData();
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Tugas ditambahkan')));
@@ -87,14 +87,14 @@ class _PengingatTugasPageState extends State<PengingatTugasPage> {
             child: Text('Batal'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               setState(() {
                 _tugas[index] = Tugas(
                   deskripsi: _tugasController.text,
                   selesai: _tugas[index].selesai,
                 );
               });
-              _saveData();
+              await _saveData();
               Navigator.of(context).pop();
               _tugasController.clear();
             },
@@ -105,21 +105,21 @@ class _PengingatTugasPageState extends State<PengingatTugasPage> {
     );
   }
 
-  void _deleteTugas(int index) {
+  void _deleteTugas(int index) async {
     setState(() {
       _tugas.removeAt(index);
     });
-    _saveData();
+    await _saveData();
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text('Tugas dihapus')));
   }
 
-  void _toggleSelesai(int index) {
+  void _toggleSelesai(int index) async {
     setState(() {
       _tugas[index].selesai = !_tugas[index].selesai;
     });
-    _saveData();
+    await _saveData();
   }
 
   @override

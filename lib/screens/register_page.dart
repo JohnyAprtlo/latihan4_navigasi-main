@@ -11,30 +11,43 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  // Controller untuk input text
   final TextEditingController _namaController = TextEditingController();
-  final TextEditingController _nimController =
-      TextEditingController(); // NIM Controller added
+  final TextEditingController _nimController = TextEditingController();
+  final TextEditingController _jurusanController =
+      TextEditingController(); // Controller Jurusan
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
-  final DatabaseService _db = DatabaseService(); // Instance database service
+  // Variable untuk menyimpan semester yang dipilih (1-13)
+  // Default null agar user harus memilih
+  String? _selectedSemester;
 
+  // Instance database service untuk komunikasi dengan Hive
+  final DatabaseService _db = DatabaseService();
+
+  // State untuk show/hide password
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+
+  // State untuk loading indicator saat proses register
   bool _isLoading = false;
 
   /// Method untuk register user baru ke database
   void _register() async {
     // Validasi: semua field harus diisi
     if (_namaController.text.isEmpty ||
-        _nimController.text.isEmpty || // Validasi NIM
+        _nimController.text.isEmpty ||
+        _jurusanController.text.isEmpty || // Validasi Jurusan
         _emailController.text.isEmpty ||
         _usernameController.text.isEmpty ||
         _passwordController.text.isEmpty ||
-        _confirmPasswordController.text.isEmpty) {
+        _confirmPasswordController.text.isEmpty ||
+        _selectedSemester == null) {
+      // Validasi semester tidak boleh kosong
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Semua field harus diisi')));
@@ -65,28 +78,30 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    // Set loading state
+    // Set loading state (menampilkan indikator loading)
     setState(() => _isLoading = true);
 
-    // Simulasi delay network (opsional, untuk UX)
+    // Simulasi delay network (opsional, untuk UX agar tidak terlalu cepat)
     await Future.delayed(Duration(milliseconds: 800));
 
     // Coba register user ke database
     // registerUser() akan return false jika username sudah dipakai
-    // Pass nama dan nim untuk auto-create profile
     bool success = await _db.registerUser(
-      username: _usernameController.text.trim(), // trim untuk hapus spasi
+      username: _usernameController.text
+          .trim(), // trim untuk hapus spasi awal/akhir
       password: _passwordController.text,
       email: _emailController.text.trim(),
       nama: _namaController.text.trim(),
       nim: _nimController.text.trim(),
+      jurusan: _jurusanController.text.trim(), // Kirim data jurusan
+      semester: _selectedSemester!, // Kirim data semester yang dipilih
     );
 
-    // Clear loading state
+    // Clear loading state (sembunyikan indikator loading)
     setState(() => _isLoading = false);
 
     if (success) {
-      // Registrasi berhasil! Show success message
+      // Registrasi berhasil! Tampilkan pesan sukses
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Registrasi berhasil! Silakan login.'),
@@ -94,13 +109,13 @@ class _RegisterPageState extends State<RegisterPage> {
         ),
       );
 
-      // Navigate ke login page
+      // Navigate ke login page dan hapus history route agar tidak bisa back
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => LoginPage()),
       );
     } else {
-      // Registrasi gagal - username sudah dipakai
+      // Registrasi gagal - kemungkinan username sudah dipakai
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Username sudah digunakan! Pilih username lain.'),
@@ -173,6 +188,45 @@ class _RegisterPageState extends State<RegisterPage> {
                       labelText: 'NIM',
                       prefixIcon: Icon(Icons.badge_outlined),
                     ),
+                  ),
+                  SizedBox(height: 16),
+
+                  // Jurusan
+                  TextField(
+                    controller: _jurusanController,
+                    decoration: InputDecoration(
+                      labelText: 'Jurusan',
+                      prefixIcon: Icon(Icons.school_rounded),
+                    ),
+                  ),
+                  SizedBox(height: 16),
+
+                  // Semester Dropdown (1-13)
+                  // Dropdown untuk memilih semester user saat ini
+                  DropdownButtonFormField<String>(
+                    value: _selectedSemester,
+                    decoration: InputDecoration(
+                      labelText: 'Semester',
+                      prefixIcon: Icon(Icons.school_outlined),
+                    ),
+                    dropdownColor: AppTheme
+                        .backgroundCard, // Warna dropdown matches theme card
+                    items:
+                        List.generate(13, (index) {
+                          // Generate angka 1-13
+                          return (index + 1).toString();
+                        }).map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text('Semester $value'),
+                          );
+                        }).toList(),
+                    onChanged: (newValue) {
+                      // Update state saat user memilih semester
+                      setState(() {
+                        _selectedSemester = newValue;
+                      });
+                    },
                   ),
                   SizedBox(height: 16),
 
